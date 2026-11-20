@@ -36,7 +36,7 @@ class PipelineTests(unittest.TestCase):
         snapshots = {
             self.registry_id: DriveSnapshot(self.registry_id, "v1", "Registry", [{"text":self.atlas_id}]),
             self.sourcebook_id: DriveSnapshot(self.sourcebook_id, "v1", "Sourcebook", [{"text":"END-SHIP-001 dossier"}]),
-            self.atlas_id: DriveSnapshot(self.atlas_id, "v1", "Atlas", [{"text":"END-SHIP-001 — Test"}]),
+            self.atlas_id: DriveSnapshot(self.atlas_id, "v1", "Atlas", [{"text":"END-SHIP-001 — Test"},{"text":"Status: Author-approved master visual reference"}]),
         }
         self.transport = MockDrive(snapshots, docx.read_bytes())
 
