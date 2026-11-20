@@ -76,7 +76,7 @@ def retrieve_asset_bundle(project_id: str, asset_id: str,
             asset = extract_assets(path, asset_id)[0]
             output_dir = Path(private_output_dir)
             output_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
-            if output_dir.is_symlink():
+            if output_dir.is_symlink() or (output_dir.stat().st_mode & 0o077):
                 raise RetrievalPipelineBlocked('UNSAFE_OUTPUT_DIRECTORY')
             suffix = '.png' if asset.format == 'PNG' else '.jpg' if asset.format == 'JPEG' else None
             if suffix is None:
