@@ -5,7 +5,7 @@ The public MCP server does not have authorization to perform them directly.
 """
 from mcp.server.fastmcp import FastMCP
 from engine import project_sources, plan_retrieval, inspect_drive_record
-from adapter_integration import adapter_manifest
+from adapter_integration import adapter_manifest, asset_reference_manifest
 
 mcp = FastMCP("Universal Project Engine", host="0.0.0.0", stateless_http=True, json_response=True)
 
@@ -51,6 +51,12 @@ def inspect_connector_evidence(
 def get_asset_adapter_manifest(project_id: str) -> dict:
     """Describe the registered project asset adapter and explicit integration limits."""
     return adapter_manifest(project_id)
+
+
+@mcp.tool()
+def get_asset_reference_manifest(project_id: str, asset_id: str) -> dict:
+    """Return an archive-verified asset fingerprint, never private image bytes."""
+    return asset_reference_manifest(project_id, asset_id)
 
 
 app = mcp.streamable_http_app()
