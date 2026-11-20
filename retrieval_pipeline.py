@@ -10,7 +10,7 @@ from tempfile import TemporaryDirectory
 from engine import _project
 from drive_transport import ServiceAccountDriveTransport, DriveTransportUnavailable
 from production_bundle import prepare_production_bundle, ProductionBundleBlocked
-from atlas_binary import extract_assets
+from atlas_binary import extract_assets, ASSET_HEADING
 
 class RetrievalPipelineBlocked(ValueError):
     pass
@@ -42,6 +42,22 @@ def retrieve_asset_bundle(project_id: str, asset_id: str,
     if len(resolved) != 1:
         raise RetrievalPipelineBlocked("ASSET_ATLAS_MISSING_OR_AMBIGUOUS")
     key, atlas = resolved[0]
+    # Approval must be found within this asset's own live Atlas section.
+    section = []
+    active = False
+    for paragraph in atlas.paragraphs:
+        line = paragraph.get('text', '').strip()
+        heading = ASSET_HEADING.match(line)
+        if heading:
+            if active:
+                break
+            if heading.group(1) == asset_id:
+                active = True
+        if active:
+            section.append(line)
+    if not section or not any('author-approved' in line.casefold() or
+                              'approved visual model' in line.casefold() for line in section):
+        raise RetrievalPipelineBlocked('ATLAS_ASSET_APPROVAL_NOT_ESTABLISHED')
     with TemporaryDirectory() as tmp:
         raw, revision = drive.export_docx(atlas.document_id)
         if revision != atlas.revision_id:
@@ -68,6 +84,8 @@ def retrieve_asset_bundle(project_id: str, asset_id: str,
             latest = drive.read_document(snapshot.document_id)
             if latest.revision_id != snapshot.revision_id:
                 raise RetrievalPipelineBlocked("SOURCE_CHANGED_DURING_RETRIEVAL")
+        result['visual_approval_verified'] = True
+        result['visual_approval_basis'] = 'APPROVAL_TEXT_IN_AUTHENTICATED_ATLAS_SECTION'
         if private_output_dir is not None:
             # Write actual verified reference bytes for the private rendering gateway.
             # Never return binary bytes from the public MCP endpoint.
