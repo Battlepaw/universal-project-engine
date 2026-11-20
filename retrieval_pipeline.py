@@ -10,12 +10,14 @@ from tempfile import TemporaryDirectory
 from engine import _project
 from drive_transport import ServiceAccountDriveTransport, DriveTransportUnavailable
 from production_bundle import prepare_production_bundle, ProductionBundleBlocked
+from atlas_binary import extract_assets
 
 class RetrievalPipelineBlocked(ValueError):
     pass
 
 def retrieve_asset_bundle(project_id: str, asset_id: str,
-                          transport: ServiceAccountDriveTransport | None = None) -> dict:
+                          transport: ServiceAccountDriveTransport | None = None,
+                          private_output_dir: str | None = None) -> dict:
     sources = _project(project_id)["sources"]
     if not all(k in sources for k in ("document_registry", "master_sourcebook")):
         raise RetrievalPipelineBlocked("PROJECT_BOOTSTRAP_SOURCES_MISSING")
@@ -66,4 +68,33 @@ def retrieve_asset_bundle(project_id: str, asset_id: str,
             latest = drive.read_document(snapshot.document_id)
             if latest.revision_id != snapshot.revision_id:
                 raise RetrievalPipelineBlocked("SOURCE_CHANGED_DURING_RETRIEVAL")
+        if private_output_dir is not None:
+            # Write actual verified reference bytes for the private rendering gateway.
+            # Never return binary bytes from the public MCP endpoint.
+            import os
+            import tempfile
+            asset = extract_assets(path, asset_id)[0]
+            output_dir = Path(private_output_dir)
+            output_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+            if output_dir.is_symlink():
+                raise RetrievalPipelineBlocked('UNSAFE_OUTPUT_DIRECTORY')
+            suffix = '.png' if asset.format == 'PNG' else '.jpg' if asset.format == 'JPEG' else None
+            if suffix is None:
+                raise RetrievalPipelineBlocked('UNSUPPORTED_IMAGE_FORMAT')
+            target = output_dir / (asset_id + '_' + asset.sha256[:16] + suffix)
+            if target.exists():
+                if sha256(target.read_bytes()).hexdigest() != asset.sha256:
+                    raise RetrievalPipelineBlocked('EXISTING_OUTPUT_HASH_MISMATCH')
+            else:
+                fd, temp = tempfile.mkstemp(dir=str(output_dir), prefix='.asset_')
+                try:
+                    with os.fdopen(fd, 'wb') as stream:
+                        stream.write(asset.data)
+                    os.chmod(temp, 0o600)
+                    os.replace(temp, target)
+                finally:
+                    if os.path.exists(temp):
+                        os.unlink(temp)
+            result['private_reference_path'] = str(target)
+            result['reference_bytes_persisted'] = True
         return result
