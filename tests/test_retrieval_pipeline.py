@@ -45,6 +45,15 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(result["image"]["width"], 30)
         self.assertEqual(result["status"], "SOURCE_AND_IMAGE_BYTES_RESOLVED_NOT_PROVIDER_DELIVERED")
 
+    def test_persisted_reference_bytes(self):
+        import hashlib
+        target = Path(self.tmp.name) / 'private'
+        result = retrieve_asset_bundle('endaria', 'END-SHIP-001', self.transport,
+                                       private_output_dir=str(target))
+        saved = Path(result['private_reference_path'])
+        self.assertTrue(saved.is_file())
+        self.assertEqual(hashlib.sha256(saved.read_bytes()).hexdigest(), result['image']['sha256'])
+
     def test_missing_sourcebook_blocks(self):
         self.transport.snapshots[self.sourcebook_id] = DriveSnapshot(
             self.sourcebook_id, "v1", "Sourcebook", [{"text":"other"}])
