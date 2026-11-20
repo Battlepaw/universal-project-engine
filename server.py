@@ -6,6 +6,7 @@ The public MCP server does not have authorization to perform them directly.
 from mcp.server.fastmcp import FastMCP
 from engine import project_sources, plan_retrieval, inspect_drive_record
 from adapter_integration import adapter_manifest, asset_reference_manifest
+from visual_preflight import check_visual_preflight
 
 mcp = FastMCP("Universal Project Engine", host="0.0.0.0", stateless_http=True, json_response=True)
 
@@ -57,6 +58,12 @@ def get_asset_adapter_manifest(project_id: str) -> dict:
 def get_asset_reference_manifest(project_id: str, asset_id: str) -> dict:
     """Return an archive-verified asset fingerprint, never private image bytes."""
     return asset_reference_manifest(project_id, asset_id)
+
+
+@mcp.tool()
+def check_comic_visual_preflight(project_id: str, required_assets: list[str]) -> dict:
+    """Fail closed until actual source verification and image-provider receipts are supplied through a trusted integration."""
+    return check_visual_preflight(project_id, required_assets)
 
 
 app = mcp.streamable_http_app()
