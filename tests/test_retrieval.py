@@ -12,7 +12,7 @@ class RetrievalTests(unittest.TestCase):
                        query="Sweetwind")
 
     def test_registered_sources(self):
-        self.assertEqual(len(project_sources("endaria")["sources"]), 4)
+        self.assertEqual(len(project_sources("endaria")["sources"]), 5)
 
     def test_unknown_project_fails_closed(self):
         with self.assertRaisesRegex(ValueError, "PROJECT_NOT_REGISTERED"):
@@ -51,6 +51,7 @@ class RetrievalTests(unittest.TestCase):
     def test_visual_retrieval_plan_includes_atlas(self):
         result = plan_retrieval("endaria", "Sweetwind visual reference")
         self.assertIn("character_visual_atlas", [s["source_key"] for s in result["steps"]])
+        self.assertIn("visual_atlas_a", [s["source_key"] for s in result["steps"]])
         self.assertEqual(result["status"], "LIVE_CONNECTOR_RETRIEVAL_REQUIRED")
 
 
