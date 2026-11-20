@@ -1,0 +1,63 @@
+{
+  "project_id": "endaria",
+  "production_id": "SD-WC-E001-S01",
+  "status": "EXPLORATORY_BLOCKED_PENDING_REFERENCE_DELIVERY",
+  "source": {
+    "document_id": "1FcxcbdBbjiQo6rlRTjcHlww7gHe4cqKhnZ3B_6iGKwU",
+    "chapter": "Chapter 1: The Sweetwind makes landfall.",
+    "scope": "opening three narrative paragraphs",
+    "note": "Caption text below is adaptation, not verbatim quotation."
+  },
+  "format": "six panels, continuous vertical scroll",
+  "style": "grounded illustrative oil paint matching author-approved Becca portrait",
+  "required_reference_assets": [
+    "VIS-SD-001",
+    "END-SHIP-001"
+  ],
+  "panels": [
+    {
+      "id": "SD-WC-E001-S01-P001",
+      "beat": "Establish immensity of Endaria sky; Sweetwind small in frame",
+      "caption": "People used to ask what it was like to fly alone."
+    },
+    {
+      "id": "SD-WC-E001-S01-P002",
+      "beat": "Becca alone at a plausible approved shipboard station",
+      "caption": "Some imagined freedom. Others could hardly believe it."
+    },
+    {
+      "id": "SD-WC-E001-S01-P003",
+      "beat": "Lone vessel against mighty tempest winds",
+      "caption": "It was terrifying and exhilarating."
+    },
+    {
+      "id": "SD-WC-E001-S01-P004",
+      "beat": "Close view of Becca and isolation, no invented incident",
+      "caption": "And deeply lonely."
+    },
+    {
+      "id": "SD-WC-E001-S01-P005",
+      "beat": "Visual danger of vast empty sky; no new plot event",
+      "caption": "Alone, there was no margin for error."
+    },
+    {
+      "id": "SD-WC-E001-S01-P006",
+      "beat": "Sweetwind continues across vast sky, end beat",
+      "caption": "One mistake, and I could disappear without a trace."
+    }
+  ],
+  "prohibitions": [
+    "No floating islands or invented terrain in the opening scene",
+    "No generic tall ship substituted for approved Sweetwind geometry",
+    "No invented Becca likeness or costume",
+    "No unapproved ornamentation, sky-pirate styling or decorative fantasy machinery",
+    "No claim of canon approval for image-generated additions"
+  ],
+  "gates": {
+    "source_verified": true,
+    "approved_image_hashes_verified_in_archive": true,
+    "provider_reference_delivery_verified": false,
+    "visual_fidelity_review_passed": false,
+    "author_approved": false
+  }
+}

@@ -29,6 +29,11 @@ PROJECTS = {
                 "title": "ENDARIA Universe — Master Sourcebook",
                 "role": "canon_reference",
             },
+            "visual_atlas_a": {
+                "id": "1cLoPTR-rzxFZJuWAGL5cm9hbQDGAsQIXP8Ev10t0uVA",
+                "title": "ENDARIA Universe — Visual Atlas A: Vessels and Creatures",
+                "role": "approved_vessels_and_creatures_visuals",
+            },
             "character_visual_atlas": {
                 "id": "1uKCj5cIB_moaFVuzmmqcPXA8dS27qjoJVlT1apch-p4",
                 "title": "Character Visual Atlas",
@@ -82,7 +87,7 @@ def plan_retrieval(project_id: str, topic: str) -> dict:
         raise ValueError("QUERY_REQUIRED")
     keys = ["operations_manual", "document_registry", "master_sourcebook"]
     if re.search(r"visual|character|atlas|image|portrait|render|design|art|sweetwind|becca", topic, re.I):
-        keys.append("character_visual_atlas")
+        keys.extend(["visual_atlas_a", "character_visual_atlas"])
     steps = []
     for key in keys:
         s = _source(project_id, key)
