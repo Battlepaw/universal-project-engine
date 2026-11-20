@@ -4,7 +4,7 @@ Project files and assets remain in Google Drive. This endpoint performs no retri
 """
 from mcp.server.fastmcp import FastMCP
 
-mcp = FastMCP("Universal Project Engine", stateless_http=True, json_response=True)
+mcp = FastMCP("Universal Project Engine", host="0.0.0.0", stateless_http=True, json_response=True)
 
 @mcp.tool()
 def list_projects() -> dict:
