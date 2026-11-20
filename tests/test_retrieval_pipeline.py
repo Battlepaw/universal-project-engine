@@ -60,6 +60,13 @@ class PipelineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             retrieve_asset_bundle("endaria", "END-SHIP-001", self.transport)
 
+    def test_unapproved_atlas_blocks(self):
+        self.transport.snapshots[self.atlas_id] = DriveSnapshot(
+            self.atlas_id, 'v1', 'Atlas', [{'text':'END-SHIP-001 — Test'},
+                                         {'text':'Status: provisional, not approved'}])
+        with self.assertRaises(RetrievalPipelineBlocked):
+            retrieve_asset_bundle('endaria', 'END-SHIP-001', self.transport)
+
     def test_export_drift_blocks(self):
         self.transport.export_revision = "v2"
         with self.assertRaises(RetrievalPipelineBlocked):
