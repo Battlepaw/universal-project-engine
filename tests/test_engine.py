@@ -15,7 +15,7 @@ class EngineTests(unittest.TestCase):
         result = project_sources("endaria")
         self.assertEqual(result["project_id"], "endaria")
         self.assertFalse(result["direct_google_drive_access"])
-        self.assertEqual(len(result["sources"]), 4)
+        self.assertEqual(len(result["sources"]), 5)
 
     def test_reject_unknown_project(self):
         with self.assertRaisesRegex(ValueError, "PROJECT_NOT_REGISTERED"):
