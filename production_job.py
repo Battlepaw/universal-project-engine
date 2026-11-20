@@ -5,6 +5,7 @@ and must be reviewed before promotion to the Visual Atlas.
 """
 from __future__ import annotations
 from hashlib import sha256
+import os
 import json
 from pathlib import Path
 from retrieval_pipeline import retrieve_asset_bundle
@@ -22,6 +23,8 @@ def run_production_job(*, project_id: str, asset_ids: list[str], prompt: str,
         raise ProductionJobBlocked("ASSET_IDS_MISSING_OR_DUPLICATE")
     directory = Path(private_output_dir)
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    if directory.is_symlink() or (directory.stat().st_mode & 0o077):
+        raise ProductionJobBlocked('PRIVATE_OUTPUT_DIRECTORY_PERMISSIONS_UNSAFE')
     bundles = []
     for asset_id in asset_ids:
         bundle = retrieve_asset_bundle(project_id, asset_id, transport,
@@ -45,7 +48,9 @@ def run_production_job(*, project_id: str, asset_ids: list[str], prompt: str,
     output = directory / (request_id + ext)
     if output.exists():
         raise ProductionJobBlocked("OUTPUT_ALREADY_EXISTS")
-    output.write_bytes(image)
+    fd = os.open(output, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, 'wb') as stream:
+        stream.write(image)
     manifest = {"project_id":project_id,"request_id":request_id,
                 "status":"GENERATED_UNAPPROVED",
                 "output_sha256":sha256(image).hexdigest(),
@@ -54,5 +59,8 @@ def run_production_job(*, project_id: str, asset_ids: list[str], prompt: str,
                 "provider_transport_status":result.get("status"),
                 "visual_fidelity_verified":False,"author_approved":False,
                 "drive_output_backup_verified":False}
-    (directory / (request_id + ".json")).write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    manifest_path = directory / (request_id + '.json')
+    fd = os.open(manifest_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, 'w', encoding='utf-8') as stream:
+        stream.write(json.dumps(manifest, indent=2))
     return manifest
