@@ -31,3 +31,14 @@ Each dependency has stable key, type, source ID, revision, digest, and provenanc
 5. Stage tests and connector validation before any production rollout; preserve existing Render URL and working MCP tools.
 
 Current status: unified evidence validator implemented on security-staging; authenticated source discovery, automatic image extraction, and rendering transport are NOT implemented in the shared MCP engine.
+
+## Implementation update (20 November 2026)
+- `registry_resolver.py`: resolves future stable asset IDs against current registry and Atlas evidence.
+- `atlas_binary.py`: extracts embedded images by stable heading; validated locally against real ENDARIA Atlas exports for END-SHIP-001, VIS-SD-001 and VIS-IE-041.
+- `production_bundle.py`: combines registry, Sourcebook, Atlas revision and export bytes; does not claim independent attestation of caller-supplied evidence.
+- `drive_transport.py`: optional server-side Google service account transport; needs GOOGLE_SERVICE_ACCOUNT_JSON configured securely and explicit Drive sharing to service account. Not yet provisioned or live-tested.
+- `retrieval_pipeline.py`: resolves registered sources, reads through authenticated transport, exports DOCX, checks revisions and persists actual reference bytes in a private directory.
+- `image_provider.py`: sends hash-verified image bytes in a multipart image-edit request; needs OPENAI_API_KEY, explicit paid API access and a real provider test.
+- `production_job.py`: joins retrieval and provider handoff, stores unapproved output and evidence manifest. Does not yet back up to Drive or verify visual fidelity.
+- Live production Render MCP is unchanged. Staging regression tests and mock integrations do not prove live Google or image-provider access.
+- Never put service-account private keys or API keys into GitHub, chat, logs, or public MCP responses. Keep credentials in Render secrets and restrict private image file permissions.
