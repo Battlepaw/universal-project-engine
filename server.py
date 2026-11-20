@@ -7,6 +7,7 @@ from mcp.server.fastmcp import FastMCP
 from engine import project_sources, plan_retrieval, inspect_drive_record
 from adapter_integration import adapter_manifest, asset_reference_manifest
 from visual_preflight import check_visual_preflight
+from registry_resolver import resolve_asset_dependencies
 
 mcp = FastMCP("Universal Project Engine", host="0.0.0.0", stateless_http=True, json_response=True)
 
@@ -64,6 +65,15 @@ def get_asset_reference_manifest(project_id: str, asset_id: str) -> dict:
 def check_comic_visual_preflight(project_id: str, required_assets: list[str]) -> dict:
     """Fail closed until actual source verification and image-provider receipts are supplied through a trusted integration."""
     return check_visual_preflight(project_id, required_assets)
+
+
+@mcp.tool()
+def resolve_live_atlas_asset(project_id: str, asset_id: str,
+                             registry_document_id: str, registry_revision_id: str,
+                             registry_paragraphs: list[dict], atlas_records: list[dict]) -> dict:
+    """Resolve any stable Atlas asset ID from live connector evidence, without hardcoded per-asset paths."""
+    return resolve_asset_dependencies(project_id, asset_id, registry_document_id,
+                                      registry_revision_id, registry_paragraphs, atlas_records)
 
 
 app = mcp.streamable_http_app()
