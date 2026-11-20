@@ -38,6 +38,20 @@ def run_production_job(*, project_id: str, asset_ids: list[str], prompt: str,
                    "sha256": b["image"]["sha256"]} for b in bundles]
     send = provider or send_image_edit
     result = send(prompt=prompt, references=references)
+    receipt = result.get("references")
+    expected = {r["asset_id"]: r["sha256"] for r in references}
+    if not isinstance(receipt, list) or len(receipt) != len(expected):
+        raise ProductionJobBlocked("PROVIDER_REFERENCE_RECEIPT_MISSING")
+    observed = {}
+    for item in receipt:
+        if not isinstance(item, dict) or item.get("accepted") is not True:
+            raise ProductionJobBlocked("PROVIDER_REFERENCE_NOT_ACCEPTED")
+        asset = item.get("asset_id")
+        if asset not in expected or asset in observed:
+            raise ProductionJobBlocked("PROVIDER_REFERENCE_RECEIPT_INVALID")
+        observed[asset] = item.get("sha256")
+    if observed != expected:
+        raise ProductionJobBlocked("PROVIDER_REFERENCE_HASH_MISMATCH")
     image = result.get("output_bytes")
     if not isinstance(image, bytes):
         raise ProductionJobBlocked("PROVIDER_OUTPUT_MISSING")
