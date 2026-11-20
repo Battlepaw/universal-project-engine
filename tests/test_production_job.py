@@ -27,6 +27,7 @@ class ProductionJobTests(unittest.TestCase):
         self.assertEqual(len(references), 2)
         self.assertEqual(references[0]["sha256"], self.hash)
         return {"status":"PROVIDER_ACCEPTED_REFERENCE_REQUEST",
+                "references":[{"asset_id":r["asset_id"],"sha256":r["sha256"],"accepted":True} for r in references],
                 "output_bytes":self.image.read_bytes()}
 
     def test_full_job_with_two_references(self):
@@ -38,6 +39,17 @@ class ProductionJobTests(unittest.TestCase):
         self.assertTrue((Path(self.tmp.name) / "intro-01.png").exists())
         self.assertTrue((Path(self.tmp.name) / "intro-01.json").exists())
         self.assertFalse(result["author_approved"])
+
+    def test_missing_provider_receipt_blocks_output(self):
+        def unverified(prompt, references):
+            return {"status":"PROVIDER_ACCEPTED_REFERENCE_REQUEST",
+                    "output_bytes":self.image.read_bytes()}
+        with patch("production_job.retrieve_asset_bundle", side_effect=self.bundle):
+            with self.assertRaisesRegex(ProductionJobBlocked, "PROVIDER_REFERENCE_RECEIPT_MISSING"):
+                run_production_job(project_id="endaria",
+                    asset_ids=["END-SHIP-001","VIS-SD-001"], prompt="Panel 1",
+                    private_output_dir=self.tmp.name, request_id="no-receipt", provider=unverified)
+        self.assertFalse((Path(self.tmp.name) / "no-receipt.png").exists())
 
     def test_duplicate_assets_block(self):
         with self.assertRaises(ProductionJobBlocked):
