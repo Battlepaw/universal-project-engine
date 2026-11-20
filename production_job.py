@@ -31,6 +31,8 @@ def run_production_job(*, project_id: str, asset_ids: list[str], prompt: str,
                                        private_output_dir=str(directory / "references"))
         if bundle["status"] != "SOURCE_AND_IMAGE_BYTES_RESOLVED_NOT_PROVIDER_DELIVERED":
             raise ProductionJobBlocked("RETRIEVAL_NOT_COMPLETE")
+        if bundle.get('visual_approval_verified') is not True:
+            raise ProductionJobBlocked('ATLAS_VISUAL_APPROVAL_NOT_VERIFIED')
         bundles.append(bundle)
     references = [{"asset_id": b["asset_id"], "private_reference_path": b["private_reference_path"],
                    "sha256": b["image"]["sha256"]} for b in bundles]
