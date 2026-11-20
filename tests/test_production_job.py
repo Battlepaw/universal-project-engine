@@ -17,6 +17,7 @@ class ProductionJobTests(unittest.TestCase):
     def bundle(self, project_id, asset_id, transport, private_output_dir):
         return {"asset_id":asset_id,
                 "status":"SOURCE_AND_IMAGE_BYTES_RESOLVED_NOT_PROVIDER_DELIVERED",
+                "visual_approval_verified":True,
                 "private_reference_path":str(self.image),
                 "image":{"sha256":self.hash},
                 "sourcebook":{"revision_id":"v1"},
