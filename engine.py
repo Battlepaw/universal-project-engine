@@ -34,6 +34,21 @@ PROJECTS = {
                 "title": "Character Visual Atlas",
                 "role": "approved_character_visuals",
             },
+            "visual_atlas_a": {
+                "id": "1cLoPTR-rzxFZJuWAGL5cm9hbQDGAsQIXP8Ev10t0uVA",
+                "title": "ENDARIA Universe — Visual Atlas A: Vessels and Creatures",
+                "role": "approved_vessel_and_patch_visuals",
+            },
+            "heraldry_register": {
+                "id": "1kQxe5v5geV6qkaNcR0Kh45mJ-m-hW8TnMIMirDvOuHk",
+                "title": "ENDARIA — Heraldry, Insignia & Symbols Working Register (Provisional)",
+                "role": "visual_working_inventory",
+            },
+            "sky_drifters_manuscript": {
+                "id": "1FcxcbdBbjiQo6rlRTjcHlww7gHe4cqKhnZ3B_6iGKwU",
+                "title": "Sky Drifters (RR Recovered Version)",
+                "role": "verified_narrative_evidence",
+            },
         },
     },
 }
@@ -83,6 +98,11 @@ def plan_retrieval(project_id: str, topic: str) -> dict:
     keys = ["operations_manual", "document_registry", "master_sourcebook"]
     if re.search(r"visual|character|atlas|image|portrait|render|design|art|sweetwind|becca", topic, re.I):
         keys.append("character_visual_atlas")
+    if re.search(r"patch|insignia|herald|ship|sweetwind|uniform|design|image|visual", topic, re.I):
+        keys.append("visual_atlas_a")
+        keys.append("heraldry_register")
+    if re.search(r"becca|rebecca|sky drifters|sweetwind|neil|captain", topic, re.I):
+        keys.append("sky_drifters_manuscript")
     steps = []
     for key in keys:
         s = _source(project_id, key)
