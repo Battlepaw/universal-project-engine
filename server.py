@@ -5,6 +5,7 @@ The public MCP server does not have authorization to perform them directly.
 """
 from mcp.server.fastmcp import FastMCP
 from engine import project_sources, plan_retrieval, inspect_drive_record
+from visual_gate import inspect_visual_work_order
 
 mcp = FastMCP("Universal Project Engine", host="0.0.0.0", stateless_http=True, json_response=True)
 
@@ -44,6 +45,23 @@ def inspect_connector_evidence(
     """
     return inspect_drive_record(project_id, source_key, document_id, revision_id,
                                 title, paragraphs, query, max_results)
+
+
+@mcp.tool()
+def inspect_visual_preflight(
+    project_id: str, subject_id: str, intent: str, topic: str,
+    source_evidence: list[dict], approved_assets: list[dict],
+    visual_rules: list[dict], additional_required_roles: list[str] | None = None,
+) -> dict:
+    """Fail-closed project-bound visual job inspection, not a rendering permit.
+
+    Requires live connector evidence, approved reference metadata and mandatory
+    visual standards. The secure byte-aware rendering gateway is not wired into
+    this public plugin yet, so this tool cannot authorize a generation.
+    """
+    return inspect_visual_work_order(project_id, subject_id, intent, topic,
+                                     source_evidence, approved_assets,
+                                     visual_rules, additional_required_roles)
 
 
 app = mcp.streamable_http_app()
