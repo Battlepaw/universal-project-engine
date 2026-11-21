@@ -27,18 +27,25 @@ Only ENDARIA has verified document references so far. Other projects must be reg
 Pending: authenticated server-side Drive read, source registry ingestion without a static manifest, asset retrieval, server-side authenticated project access, persistence/revision logs, rendering. None of these is claimed implemented.
 
 
-## Visual-generation enforcement — feature branch (November 2026)
+## Visual-production repair: actual failure first (21 November 2026)
 
-The plugin now exposes `inspect_visual_preflight` and registers the live ENDARIA Character Atlas, Atlas A, Heraldry Register, and recovered Sky Drifters manuscript source IDs. It checks source IDs and revisions, approved-asset metadata, explicit rule provenance, unique references and required image roles. A character edit requires a `character_master` asset; existing-design edits require `design_master`; specific insignia work can require a second role such as `unit_patch_master`.
+**Incident**: Becca Marshall turnaround generation changed her approved blue-black hair and face, invented nonapproved qualification/captain devices, placed Sweetwind's circular patch off-centre from the bronze backing, then used that incorrect draft as the reference for a second (formal dress) generation. Author-approved master references were already present in Google Drive.
 
-**A passed metadata check is NOT permission to generate.** The response intentionally remains `BLOCKED_REFERENCE_BYTES_AND_RENDER_TRANSPORT_NOT_VERIFIED`. This public plugin has no Drive OAuth access, cannot confirm caller-supplied evidence authenticity, cannot hash a reference that it did not actually receive, and cannot intercept ChatGPT's separate built-in image generator. No source text or private visual bytes should be persisted on this public server. This gate cannot guarantee that an image model follows an instruction.
+**Root cause**: The ChatGPT image-generation call was not controlled by this plugin. The plugin can locate registered docs and inspect submitted text metadata, but does not retrieve actual image bytes and deliver them to a reference-conditioned provider as the *same* request. No preflight metadata schema or later visual scoring is a substitute for a confirmed source-to-render handoff.
 
-### Required implementation boundary
+### Defect-ordered repair plan (do these in order; no unrelated new features)
 
-1. Retrieve the authenticated Google Docs revisions and the *actual approved image bytes* through the user's Google Drive connector. Stop on missing, stale, ambiguous, or conflicting records.
-2. Pass the trusted live-source work order and SHA-256-verified actual image bytes to a **secured** rendering gateway that exclusively uses reference-image edit transport. The existing ENDARIA Retrieval Adapter v1.1 contains `render_gateway.py`; its 21 November 2026 local improvement adds `production_gate.py` and fixes exact-caption multi-image extraction. This is NOT automatically deployed from the plugin repository.
-3. The rendering provider must accept the actual bytes for the same request. Log a transport receipt and generated image hash; **do not claim visual fidelity from an API success**.
-4. Run explicit visual checks for character likeness, costume continuity, patch geometry and positioning. Return FAIL/UNKNOWN to revision queue. Never call a result canon without author approval.
-5. Secure the Render MCP and gateway with authenticated access before attaching private Drive exports or API credentials. No keys in repository/Drive. API charges require user authorization and working credentials.
+| Order | Actual failure | Repair existing component | End-to-end acceptance condition |
+|---|---|---|---|
+| **P0. Approved image was not delivered** | Becca's original image was not the rendering input | Connect current authenticated Drive export + `docx_bridge.py` / `unified_bridge.py` extraction to existing `render_gateway.py`; do not invoke direct text-only `image_gen` for this workflow | Retrieve approved VIS-SD-001 image from current Atlas, verify embedded-object / exact caption / source revision and SHA-256, verify gateway sends those same bytes in edit multipart request; prove with a live provider round trip (not mocks) |
+| **P1. Another approved image was silently approximated** | Sweetwind patch replaced by a visually similar, misaligned redraw | Include the approved END-SHIP-001-PATCH source as a second actual image input in the **same request**; preserve its unit-patch/backing relationship | Provider request receipt binds BOTH asset hashes; output reviewer can compare against BOTH actual source images |
+| **P2. Unapproved generated draft became reference** | Formal portrait inherited blonde hair and incorrect uniform from prior draft | Keep `production_gate.py`'s approved-reference selection and `release_gate.py` promotion rules on the *only* render path; treat output as derivative until author approves | A follow-up formal-uniform edit resolves VIS-SD-001 again and rejects using a GENERATED_UNAPPROVED file as an approved master |
+| **P3. Geometry and fidelity not demonstrated** | Centering and identity drift passed through to user | Test with Becca and Sweetwind regression cases against retrieved originals; do manual visual acceptance first, automate narrow geometry checks only if needed | No claim of success from API 200 or local unit tests; author reviews likeness, dark hair, costume, patch centering, shoulders; failures remain unapproved |
 
-The deployment remains retrieval/preflight-only until an authenticated provider gateway is connected and exercised. Do not bypass this gate by generating a text-only image.
+### Constraints and what is not fixed yet
+
+- `inspect_visual_preflight` (merged into the live plugin) checks caller-supplied IDs, revisions, asset SHA-256 strings and rules. It **does not receive image bytes**, attest Drive content, submit the provider edit call or ensure adherence. Its `BLOCKED_REFERENCE_BYTES_AND_RENDER_TRANSPORT_NOT_VERIFIED` result is correct until P0/P1 live integration is proven.
+- The local ENDARIA Retrieval Adapter **v1.2**, retained in the Master Document Registry, already has `production_gate.py`, the byte-aware `render_gateway.py` and exact-caption image extraction. Repair and integrate those; do not construct an unrelated second engine, new atlas, new approval hierarchy or additional generic checks.
+- Built-in ChatGPT `image_gen` is a separate tool and **cannot be intercepted or forced** by this MCP plugin. A mandatory engine-owned path requires a secured, authenticated provider gateway and the model actually choosing that path. Until it is working, report image creation as blocked rather than bypassing it.
+- Success requires a **live source-to-provider test using actual approved reference bytes** followed by author visual approval. Passing mocked/local tests does not satisfy this.
+- No unapproved art is promoted; projects stay strictly isolated. No API credentials or private images go into the public MCP server. Live provider charges/credentials require owner action.
