@@ -49,3 +49,49 @@ Pending: authenticated server-side Drive read, source registry ingestion without
 - Built-in ChatGPT `image_gen` is a separate tool and **cannot be intercepted or forced** by this MCP plugin. A mandatory engine-owned path requires a secured, authenticated provider gateway and the model actually choosing that path. Until it is working, report image creation as blocked rather than bypassing it.
 - Success requires a **live source-to-provider test using actual approved reference bytes** followed by author visual approval. Passing mocked/local tests does not satisfy this.
 - No unapproved art is promoted; projects stay strictly isolated. No API credentials or private images go into the public MCP server. Live provider charges/credentials require owner action.
+
+
+## Visual renderer integration (21 November 2026; authentication-gated)
+
+Existing ENDARIA adapter v1.2 image transport is integrated through
+visual_transport.py and render_gateway.py. It does not change source authority,
+permit missing image references, or approve generated art.
+
+ChatGPT can call visual_render_status to inspect settings without seeing secrets.
+The tool render_approved_visual is disabled by default.
+
+Required workflow:
+1. Call plan_drive_retrieval. Use the connected authenticated Google Drive tool
+   to read the current Operations Manual, Registry, Sourcebook, matching Atlas
+   and verified manuscript. Confirm their IDs and revisions.
+2. Use Google Drive export_file to export each approved Atlas to native DOCX
+   (application/vnd.openxmlformats-officedocument.wordprocessingml.document).
+   The authenticated connector returns a short-lived signed download_url.
+3. Read the documents again and abort if any revision changed. Revision
+   bracketing detects edits but is not cryptographic export attestation.
+4. Call render_approved_visual with a job containing project_id, subject_id,
+   request_id, intent, topic, scene_prompt, source_evidence, approved_assets
+   and visual_rules. Each approved asset requires section_anchor,
+   approval_caption, sha256, source_key, document_id, revision_id,
+   asset_id, role and approval_status AUTHOR_APPROVED. Exports are records
+   with source_key, document_id, revision_id and signed_download_url.
+5. The server downloads only allowlisted signed connector exports, extracts
+   exact Atlas images, validates hashes and mandatory roles, then sends
+   the actual image bytes in one multi-image editing request. Every result
+   remains GENERATED_UNAPPROVED pending author visual review.
+
+Required secure deployment:
+- Set UPE_ACCESS_TOKEN (32+ random characters) as a Render secret and configure
+  ChatGPT's MCP connection to send it in an Authorization Bearer header.
+  Only the metered rendering tool requires this transport-level credential.
+- Set OPENAI_API_KEY as a Render secret; API image edits incur separate charges.
+- After authorization and spending controls are configured, explicitly set
+  UPE_RENDER_ENABLED=1. Keep disabled until then.
+- Redeploy and refresh MCP tool discovery, then prove a live signed-source ->
+  actual-images -> provider edit -> author-review round trip.
+- The default image model is gpt-image-2.6-sunburst; legacy gpt-image-1
+  was retired in October 2026.
+
+Do not publish private Atlas images, signed download URLs, generated outputs,
+or credentials into this public GitHub repository. Passing local tests does
+not establish paid provider delivery or visual fidelity.
