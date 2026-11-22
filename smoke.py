@@ -15,6 +15,7 @@ async def main():
             expected = {
                 "list_projects", "get_project_sources",
                 "plan_drive_retrieval", "inspect_connector_evidence",
+                "inspect_visual_preflight", "visual_render_status", "render_approved_visual",
             }
             assert expected <= names, f"Missing MCP tools: {expected - names}"
             plan = await client.call_tool("plan_drive_retrieval", {
