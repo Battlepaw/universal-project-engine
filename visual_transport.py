@@ -85,6 +85,19 @@ def extract_exact_approved_image(docx_bytes: bytes, *, anchor: str, caption: str
             label = next((paras[j].text.strip() for j in range(index-1, start-1, -1) if paras[j].text.strip()), "")
             if label.casefold() == caption.strip().casefold():
                 matches.append(doc.part.related_parts[rid].blob)
+    # The approved Becca Atlas has one section image but puts its approval
+    # statement earlier in the section, rather than immediately above it.
+    # Match the exact caption when possible; otherwise accept ONLY a single
+    # image within this verified approved section, as in adapter v1.2.
+    if not matches:
+        images = []
+        for index in range(start + 1, end):
+            for blip in paras[index]._p.xpath(".//a:blip"):
+                rid = blip.get(embed_key)
+                if rid not in doc.part.rels:
+                    raise RenderBlocked("IMAGE_RELATION_UNRESOLVED")
+                images.append(doc.part.related_parts[rid].blob)
+        matches = images
     if len(matches) != 1:
         raise RenderBlocked("APPROVED_CAPTION_IMAGE_NOT_UNIQUE")
     if not (matches[0].startswith(b"\x89PNG\r\n\x1a\n") or matches[0].startswith(b"\xff\xd8\xff")):
